@@ -7,16 +7,10 @@ def montarRam():
     for i in range(1000): 
         memoriaDados[i] = random.randint(0, 100)
 
+montarRam()
+
 def compilar(memoriaInstrucoes):  # funcao que retorna as instrucoes compiladas
     return memoriaInstrucoes  # apenas retorna a matriz de instrucoes
-
-def armazenaValorNaMemoria(valor, end):
-    umaInstrucao = [0] * 4 
-    umaInstrucao[0] = 2  # opcode 2: levar para memoria
-    umaInstrucao[1] = valor  # valor a ser armazenado
-    umaInstrucao[2] = end  # endereco 
-    umaInstrucao[3] = -1 
-    maquinaInterpretada(umaInstrucao)
 
 def maquinaInterpretada(umaInstrucao):
     opcode = umaInstrucao[0] # opcode recebe a instrucao fornecida pelo usuario
@@ -63,7 +57,25 @@ def maquina(memoriaDeInstrucoes):  # funcao que executa todas as instrucoes na m
         opcode = maquinaInterpretada(umaInstrucao)  # Interpreta a instrucao
         PC += 1  # incrementa o contador de programa
 
-def montarInstrucoesProgramaMultiplicacao(multiplicando, multiplicador, memoriaDados):
+def armazenaValorNaMemoria(valor, end):
+    umaInstrucao = [0] * 4 
+    umaInstrucao[0] = 2  # opcode 2: levar para memoria
+    umaInstrucao[1] = valor  # valor a ser armazenado
+    umaInstrucao[2] = end  # endereco 
+    umaInstrucao[3] = -1 
+    maquinaInterpretada(umaInstrucao)
+
+def carregaValorDaMemoria(end):
+    umaInstrucao = [0] * 4 
+    umaInstrucao[0] = 3  # opcode para trazer o valor da memoria
+    umaInstrucao[1] = -1  # ira receber o valor contido no endereco
+    umaInstrucao[2] = end  # endereco onde o valor esta armazenado
+    umaInstrucao[3] = -1  
+    maquinaInterpretada(umaInstrucao)
+
+    return umaInstrucao[1]
+
+def montarInstrucoesProgramaMultiplicacao(multiplicando, multiplicador):
         
     memoriaDeInstrucoes = [
         [0, 0, 0, 0] for _ in range(multiplicador + 3)
@@ -107,7 +119,7 @@ def montarInstrucoesProgramaMultiplicacao(multiplicando, multiplicador, memoriaD
     # print(memoriaDados[12])
     print(f'Resultado da multiplicação: {memoriaDados[1]}')
 
-def montarInstrucoesProgramaDivisao(dividendo, divisor, memoriaDados):
+def montarInstrucoesProgramaDivisao(dividendo, divisor):
     memoriaDeInstrucoes = [
         [0, 0, 0, 0] for _ in range(5)
     ] # o tamanho da matriz eh (divisor + 3) para acomodar todas as intrucoes necessarias, incluindo as de carga, soma repetida e a instrucao de parada (HALT).
@@ -154,7 +166,7 @@ def montarInstrucoesProgramaDivisao(dividendo, divisor, memoriaDados):
     maquina(memoriaDeInstrucoes)
     
     # Executa a divisao atraves de subtracao sucessivas
-    while memoriaDados[0] >= memoriaDados[1]:
+    while dividendo >= divisor:
         # Subtrai o divisor do dividendo
         umaInstrucao = [0] * 4 
         umaInstrucao[0] = 1  # opcode 1: subtrair
@@ -162,6 +174,9 @@ def montarInstrucoesProgramaDivisao(dividendo, divisor, memoriaDados):
         umaInstrucao[2] = 1  # Divisor
         umaInstrucao[3] = 0  # endereco para o resultado da subtracao
         maquinaInterpretada(umaInstrucao)
+
+        dividendo = carregaValorDaMemoria(0)
+        divisor = carregaValorDaMemoria(1)
 
         # Incrementa o contador de divisões
         umaInstrucao = [0] * 4 
@@ -172,23 +187,23 @@ def montarInstrucoesProgramaDivisao(dividendo, divisor, memoriaDados):
         maquinaInterpretada(umaInstrucao)
     
 
-    print(f"Resultado da divisão: {memoriaDados[3]}")
+    result = carregaValorDaMemoria(3)
+    print(f"Resultado da divisão: {result}")
     
 def exponenciacao(base, expoente, memoriaDados):
-
     armazenaValorNaMemoria(base, 2)
 
     for _ in range(expoente - 1):
         montarInstrucoesProgramaMultiplicacao(memoriaDados[2], base, memoriaDados)
         armazenaValorNaMemoria(memoriaDados[1], 2)
-    
-    print(f'Resultado da exponenciação: {memoriaDados[2]}')
+
+    result = carregaValorDaMemoria(2)
+        
+    print(f'Resultado da exponenciação: {result}')
 
 def fatorial(numero, memoriaDados):
-
     armazenaValorNaMemoria(numero, 1)
     # armazena o numero para operacao fatorial
-
     armazenaValorNaMemoria(1, 11)
     # armazena o 1 na memoria
 
@@ -200,13 +215,11 @@ def fatorial(numero, memoriaDados):
     maquinaInterpretada(umaInstrucao)
     # subtrai 1 do valor inicial do fatorial
 
-    while (memoriaDados[12] >= 1):
-        montarInstrucoesProgramaMultiplicacao(memoriaDados[1], memoriaDados[12], memoriaDados)
+    fatorFatorial1 = carregaValorDaMemoria(1)
+    fatorFatorial2 = carregaValorDaMemoria(12)
 
-        # quando a funcao de multiplicacao eh executada, a funcao maquina reseta os valores na memoria ram, por isso eh preciso armazenar os valores novamente
-
-        # armazenaValorNaMemoria(memoriaDados[1], 1)
-        # armazenaValorNaMemoria(1, 11)
+    while fatorFatorial2 >= 1:
+        montarInstrucoesProgramaMultiplicacao(fatorFatorial1, fatorFatorial2, memoriaDados)
 
         umaInstrucao = [0] * 4 
         umaInstrucao[0] = 1  # opcode 1: realizar operacao de subtracao
@@ -214,49 +227,79 @@ def fatorial(numero, memoriaDados):
         umaInstrucao[2] = 11  # endereco do contador
         umaInstrucao[3] = 12  # endereco para armazenar o resultado
         maquinaInterpretada(umaInstrucao)
-        
         # subtrai 1 do valor inicial do fatorial
+
+        fatorFatorial1 = carregaValorDaMemoria(1)
+        fatorFatorial2 = carregaValorDaMemoria(12)
     
-    print(f"Resultado de {numero}!: {memoriaDados[1]}")
+    result = fatorFatorial1
+    print(f"Resultado de {numero}!: {result}")
 
 def areaCirculo(r, memoriaDados):
     exponenciacao(r, 2, memoriaDados)
-    montarInstrucoesProgramaMultiplicacao(3, memoriaDados[2], memoriaDados)
-    print(f"Área aproximada do circulo de raio {r}: {memoriaDados[1]} u.a.²")
+    raioAoQuadrado = carregaValorDaMemoria(2)
+    montarInstrucoesProgramaMultiplicacao(3, raioAoQuadrado, memoriaDados)
+    area = carregaValorDaMemoria(1)
+    print(f"Área aproximada do circulo de raio {r}: {area} u.a.²")
 
 def areaRetangulo(l1, l2, memoriaDados):
     montarInstrucoesProgramaMultiplicacao(l1, l2, memoriaDados)
-    
+    area = carregaValorDaMemoria(1)
     if l1 == l2:
-        print(f"Area aproximada do quadrado: {memoriaDados[1]} u.a.²")    
+        print(f"Area aproximada do quadrado: {area} u.a.²")    
     else:
-        print(f"Area aproximada do retangulo: {memoriaDados[1]} u.a.²")
+        print(f"Area aproximada do retangulo: {area} u.a.²")
 
-def areaTrapezio(baseMaior, baseMenor, altura, memoriaDados):
+def progrArit(valorInicial, razao, qntdTermos):
+    armazenaValorNaMemoria(valorInicial, 0)
+    armazenaValorNaMemoria(razao, 1)
+    armazenaValorNaMemoria(qntdTermos, 2)
+    
+    elementoDaPA = carregaValorDaMemoria(0)
+    razao = carregaValorDaMemoria(1)
+    qntdTermos = carregaValorDaMemoria(2)
+   
+    if (qntdTermos > (1000-3) ):
+        return
+    
+    armazenaValorNaMemoria(elementoDaPA, 3)
 
-    armazenaValorNaMemoria(baseMaior, 0)
-    armazenaValorNaMemoria(baseMenor, 1)
+    for i in range(qntdTermos):
+        umaInstrucao = [0] * 4 
+        umaInstrucao[0] = 0  # opcode 0: soma
+        umaInstrucao[1] = 0  # endereco do contador
+        umaInstrucao[2] = 1  # endereco do contador
+        umaInstrucao[3] = 0  # endereco para armazenar o resultado
+        maquinaInterpretada(umaInstrucao)
 
-    umaInstrucao = [0] * 4 
-    umaInstrucao[0] = 0  # opcode 0: realizar operacao de soma
-    umaInstrucao[1] = 0
-    umaInstrucao[2] = 1  
-    umaInstrucao[3] = 5  # endereco para armazenar o resultado
-    maquinaInterpretada(umaInstrucao)
+        elementoDaPA = carregaValorDaMemoria(0)
+        armazenaValorNaMemoria(elementoDaPA, 3 + 1 + i)
 
-    montarInstrucoesProgramaMultiplicacao(memoriaDados[5], altura, memoriaDados)
-    montarInstrucoesProgramaDivisao(memoriaDados[1], 2, memoriaDados)
+    print(f"PA: {memoriaDados[3:(3 + qntdTermos)]} ")
+    
+def progrGeo(valorInicial, razao, qntdTermos):
+    armazenaValorNaMemoria(valorInicial, 1)
+    armazenaValorNaMemoria(razao, 2)
+    armazenaValorNaMemoria(qntdTermos, 3)
+    elementoDaPG = carregaValorDaMemoria(1)
+    razao = carregaValorDaMemoria(2)
+    qntdTermos = carregaValorDaMemoria(3)
 
-    print(f"Área do trapézio: {memoriaDados[3]} u.a.²")
+    if (qntdTermos > (1000-3) ):
+        return
 
-montarRam()
+    for i in range(qntdTermos):
+        montarInstrucoesProgramaMultiplicacao(elementoDaPG, razao)
+        armazenaValorNaMemoria(elementoDaPG, 3 + i)
+        elementoDaPG = carregaValorDaMemoria(1)
+    
+    print(f"PG: {memoriaDados[3:(3 + qntdTermos)]}")
 
 # montarInstrucoesProgramaMultiplicacao(3, 5, memoriaDados)
 # montarInstrucoesProgramaDivisao(27, 3, memoriaDados)
-# exponenciacao(3, 2, memoriaDados)
+# exponenciacao(4, 4, memoriaDados)
 # areaCirculo(3, memoriaDados)
 # areaRetangulo(2, 2, memoriaDados)
-# areaTrapezio(2, 3, 2, memoriaDados)
-
-fatorial(3, memoriaDados) 
-
+# fatorial(5, memoriaDados)
+# progrArit(0, 4, 10)
+progrGeo(1, 2, 4)
